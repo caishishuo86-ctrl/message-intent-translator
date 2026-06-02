@@ -1,29 +1,15 @@
-export const scenarios = [
-  "老板/老师",
-  "客户",
-  "同事",
-  "合作方",
-  "家人朋友",
-] as const;
+export const identities = ["上级", "客户", "同事", "家人朋友", "对象"] as const;
 
-export type Scenario = (typeof scenarios)[number];
+export const outputFormats = ["微信", "邮件"] as const;
 
-export type Priority = "高" | "中" | "低" | "需要确认";
+export type Identity = (typeof identities)[number];
 
-export type ReplyVariants = {
-  stronger: string;
-  softer: string;
-  professional: string;
-};
+export type OutputFormat = (typeof outputFormats)[number];
 
 export type AnalysisResult = {
   realIntent: string[];
-  tasks: string[];
-  priority: Priority;
-  priorityReason: string;
-  deadline: string;
+  solutionOutline: string[];
   risks: string[];
-  suggestedReply: string;
-  replyVariants: ReplyVariants;
-  needsConfirmation: string[];
+  reply?: string | null;
+  personProfileUpdate?: string | null;
 };

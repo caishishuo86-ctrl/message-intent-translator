@@ -1,23 +1,23 @@
 import { z } from "zod";
-import { scenarios } from "@/types/analysis";
+import { identities, outputFormats } from "@/types/analysis";
 
-export const analyzeRequestSchema = z.object({
-  message: z.string().trim().min(2, "请输入至少 2 个字").max(3000, "消息不能超过 3000 字"),
-  scenario: z.enum(scenarios),
-});
+export const analyzeRequestSchema = z
+  .object({
+    message: z.string().trim().max(3000, "文字内容不能超过 3000 字").optional().default(""),
+    imageDataUrl: z.string().trim().optional(),
+    identity: z.enum(identities),
+    outputFormat: z.enum(outputFormats).optional(),
+    personName: z.string().trim().max(40, "人物名称不能超过 40 个字").optional(),
+  })
+  .refine((value) => value.message.length >= 2 || Boolean(value.imageDataUrl), {
+    message: "请粘贴至少 2 个字，或上传一张聊天截图",
+    path: ["message"],
+  });
 
 export const analysisResultSchema = z.object({
   realIntent: z.array(z.string()).min(1),
-  tasks: z.array(z.string()).min(1),
-  priority: z.enum(["高", "中", "低", "需要确认"]),
-  priorityReason: z.string().min(1),
-  deadline: z.string().min(1),
+  solutionOutline: z.array(z.string()),
   risks: z.array(z.string()),
-  suggestedReply: z.string().min(1),
-  replyVariants: z.object({
-    stronger: z.string().min(1),
-    softer: z.string().min(1),
-    professional: z.string().min(1),
-  }),
-  needsConfirmation: z.array(z.string()),
+  reply: z.string().nullable().optional(),
+  personProfileUpdate: z.string().nullable().optional(),
 });

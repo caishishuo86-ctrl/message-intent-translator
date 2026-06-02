@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "消息意图翻译 Agent",
-  description: "中文办公沟通意图分析与回复生成工具",
+  description: "支持文字和截图输入的中文沟通意图分析与回复生成工具",
 };
 
 export default function RootLayout({

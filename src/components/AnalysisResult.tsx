@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { AlertTriangle, CheckCircle2, Clock3, Copy, ListChecks, Target } from "lucide-react";
+import { AlertTriangle, Copy, Lightbulb, MessageSquareText, Target, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { AnalysisResult as AnalysisResultType } from "@/types/analysis";
 
@@ -21,7 +21,11 @@ function Section({ icon, title, children }: { icon: ReactNode; title: string; ch
   );
 }
 
-function List({ items }: { items: string[] }) {
+function List({ items, emptyText }: { items: string[]; emptyText: string }) {
+  if (items.length === 0) {
+    return <p className="text-sm leading-6 text-zinc-500">{emptyText}</p>;
+  }
+
   return (
     <ul className="space-y-2 text-sm leading-6 text-zinc-700">
       {items.map((item) => (
@@ -37,24 +41,20 @@ function List({ items }: { items: string[] }) {
 export function AnalysisResult({ result }: Props) {
   const copyText = [
     `真实意图：${result.realIntent.join("；")}`,
-    `明确任务：${result.tasks.join("；")}`,
-    `优先级：${result.priority}，${result.priorityReason}`,
-    `截止时间：${result.deadline}`,
-    `风险提醒：${result.risks.join("；")}`,
-    `建议回复：${result.suggestedReply}`,
-  ].join("\n");
+    `解决方案纲要：${result.solutionOutline.join("；") || "暂无具体行动项"}`,
+    `风险提示：${result.risks.join("；") || "暂无明显风险"}`,
+    result.reply ? `回复：${result.reply}` : "",
+    result.personProfileUpdate ? `人物画像更新：${result.personProfileUpdate}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 rounded-md border border-zinc-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm text-zinc-500">优先级</p>
-          <div className="mt-1 flex items-center gap-3">
-            <span className="rounded-md bg-amber-100 px-2.5 py-1 text-sm font-semibold text-amber-900">
-              {result.priority}
-            </span>
-            <span className="text-sm text-zinc-600">{result.priorityReason}</span>
-          </div>
+          <p className="text-sm text-zinc-500">分析结果</p>
+          <p className="mt-1 text-sm text-zinc-700">按真实意图、解决方案纲要、风险提示和可选回复整理。</p>
         </div>
         <Button
           type="button"
@@ -67,41 +67,28 @@ export function AnalysisResult({ result }: Props) {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Section icon={<Target size={17} />} title="真实意图">
-          <List items={result.realIntent} />
+        <Section icon={<Target size={17} />} title="1. 真实意图">
+          <List items={result.realIntent} emptyText="暂无明确意图。" />
         </Section>
-        <Section icon={<ListChecks size={17} />} title="明确任务">
-          <List items={result.tasks} />
+        <Section icon={<Lightbulb size={17} />} title="2. 解决方案纲要">
+          <List items={result.solutionOutline} emptyText="暂无具体行动项。" />
         </Section>
-        <Section icon={<Clock3 size={17} />} title="截止时间">
-          <p className="text-sm leading-6 text-zinc-700">{result.deadline}</p>
+        <Section icon={<AlertTriangle size={17} />} title="3. 风险提示">
+          <List items={result.risks} emptyText="暂无明显风险。" />
         </Section>
-        <Section icon={<AlertTriangle size={17} />} title="风险提醒">
-          <List items={result.risks} />
-        </Section>
+        {result.reply ? (
+          <Section icon={<MessageSquareText size={17} />} title="4. 回复">
+            <p className="rounded-md bg-zinc-50 p-4 text-sm leading-7 text-zinc-800">{result.reply}</p>
+          </Section>
+        ) : null}
+        {result.personProfileUpdate ? (
+          <Section icon={<UserRound size={17} />} title="5. 人物画像更新">
+            <p className="whitespace-pre-wrap rounded-md bg-zinc-50 p-4 text-sm leading-7 text-zinc-800">
+              {result.personProfileUpdate}
+            </p>
+          </Section>
+        ) : null}
       </div>
-
-      <Section icon={<CheckCircle2 size={17} />} title="建议回复">
-        <p className="rounded-md bg-zinc-50 p-4 text-sm leading-7 text-zinc-800">
-          {result.suggestedReply}
-        </p>
-      </Section>
-
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Section title="更强硬" icon={<CheckCircle2 size={17} />}>
-          <p className="text-sm leading-7 text-zinc-700">{result.replyVariants.stronger}</p>
-        </Section>
-        <Section title="更委婉" icon={<CheckCircle2 size={17} />}>
-          <p className="text-sm leading-7 text-zinc-700">{result.replyVariants.softer}</p>
-        </Section>
-        <Section title="更专业" icon={<CheckCircle2 size={17} />}>
-          <p className="text-sm leading-7 text-zinc-700">{result.replyVariants.professional}</p>
-        </Section>
-      </div>
-
-      <Section icon={<AlertTriangle size={17} />} title="需要确认">
-        <List items={result.needsConfirmation} />
-      </Section>
     </div>
   );
 }

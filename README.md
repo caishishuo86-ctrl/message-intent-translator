@@ -1,6 +1,6 @@
 # Message Intent Translator
 
-中文办公沟通意图分析 Agent。输入一段消息并选择场景，系统会输出真实意图、明确任务、优先级、截止时间、风险提醒、建议回复，以及更强硬、更委婉、更专业的回复版本。
+中文沟通意图分析 Agent。用户可以粘贴聊天记录、邮件内容、单方任务叙述，也可以上传微信、飞书、邮件等聊天截图；系统会结合对方身份输出真实意图、解决方案纲要、风险提示，并可按微信或邮件格式生成回复。
 
 ## Tech Stack
 
@@ -20,7 +20,7 @@
 
 ## Environment
 
-Copy .env.example to .env.local and configure the model provider when you want real AI calls. Without AI_API_KEY, the app uses a local rule-based fallback so the MVP can run immediately.
+Copy .env.example to .env.local and configure the model provider. The app requires a configured OpenAI-compatible Chat Completions API. Screenshot input requires a vision-capable model, such as the configured Qwen2.5-VL-7B-Instruct.
 
 Required variables:
 
