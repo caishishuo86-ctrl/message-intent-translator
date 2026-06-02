@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String           @id @default(cuid())
+  email           String           @unique
+  name            String?
+  plan            String           @default("free")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  analyses        Analysis[]
+  userPreferences UserPreference?
+
+  @@map("users")
+}
+
+model Analysis {
+  id             String   @id @default(cuid())
+  userId         String?  @map("user_id")
+  inputMessage   String   @map("input_message")
+  scenario       String
+  analysisResult Json     @map("analysis_result")
+  createdAt      DateTime @default(now()) @map("created_at")
+  user           User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("analyses")
+}
+
+model Template {
+  id        String   @id @default(cuid())
+  name      String
+  scenario  String
+  tone      String
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("templates")
+}
+
+model UserPreference {
+  id                 String  @id @default(cuid())
+  userId             String  @unique @map("user_id")
+  preferredTone      String? @map("preferred_tone")
+  role               String?
+  industry           String?
+  communicationStyle String? @map("communication_style")
+  user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+}
