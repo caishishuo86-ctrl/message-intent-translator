@@ -20,4 +20,5 @@ export const analysisResultSchema = z.object({
   risks: z.array(z.string()),
   reply: z.string().nullable().optional(),
   personProfileUpdate: z.string().nullable().optional(),
+  userProfileUpdate: z.string().nullable().optional(),
 });

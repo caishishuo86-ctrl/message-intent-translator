@@ -28,12 +28,13 @@ const identityGuides: Record<Identity, string> = {
   ].join("\n"),
 
   同事: [
-    "目标：让协作能推进，明确分工、依赖、下一步同步方式。",
+    "目标：让协作能推进，明确分工、依赖、下一步同步方式，同时识别甩锅、模糊转交和责任漂移。",
     "关注点优先级：分工边界 > 依赖与阻塞 > 交付节奏 > 对齐口径。",
     "必须识别并写清：",
     "1) 我负责什么；2) 对方负责什么；3) 需要谁提供什么；4) 下一次同步时间/方式。",
+    "遇到“我来不及/你也看过/要不你先弄/后面我再补”这类表达时，必须提示责任转移风险；solutionOutline 要建议只承诺框架/基础版本/整理已有材料，不要默认接下完整产出。",
     "不确定就写“需要确认”，不要替同事下结论或扣帽子。",
-    "回复风格：自然直接、可落地，优先给出 2-3 个可选时间点或可选方案。",
+    "回复风格：自然直接、边界清楚、可落地；可以帮忙但要明确范围、资料、截止时间和对方后续补充责任。",
   ].join("\n"),
 
   家人朋友: [
@@ -82,6 +83,7 @@ type BuildAnalyzePromptInput = {
   outputFormat?: OutputFormat;
   personName?: string;
   personProfile?: string;
+  userProfile?: string;
 };
 
 export function buildAnalyzePrompt({
@@ -91,6 +93,7 @@ export function buildAnalyzePrompt({
   outputFormat,
   personName,
   personProfile,
+  userProfile,
 }: BuildAnalyzePromptInput) {
   const visionHint =
     hasImage && process.env.AI_ENABLE_VISION === "true"
@@ -105,6 +108,10 @@ export function buildAnalyzePrompt({
           : "该人物暂无画像：请从本次内容提取“可长期复用”的沟通特征，输出到 personProfileUpdate（不要记录隐私细节或一次性任务内容）。",
       ].join("\n")
     : "本次未指定具体人物：personProfileUpdate 必须返回 null。";
+
+  const userProfileHint = userProfile
+    ? `用户本人已有语言画像（生成 reply 时必须优先贴近这个风格，而不是写成模板话）：\n${userProfile}`
+    : "用户本人暂无语言画像：只有当输入中有足够的用户本人回复证据时，才允许输出 userProfileUpdate；否则必须返回 null。";
 
   return [
     "你是一个中文沟通意图分析助手。",
@@ -125,8 +132,15 @@ export function buildAnalyzePrompt({
     "",
     `【人物画像】\n${personHint}`,
     "",
-    "【输出 JSON 契约（必须严格遵守）】",
-    "必须只输出一个 JSON 对象，字段必须且只能为：realIntent, solutionOutline, risks, reply, personProfileUpdate。",
+    `【用户本人语言画像】\n${userProfileHint}`,
+    "",
+    "【高质量示例】",
+    "输入：指定身份=同事；具体人物=小张；回复形式=微信；消息=小张说：这个部分我今天可能来不及弄了，而且你之前不是也看过相关材料嘛，要不你先帮我把初稿搭一下？后面我再补。",
+    "输出风格参考：realIntent 要识别到“希望你先帮他完成初稿/把起草工作转移给你/后续补充不明确”；solutionOutline 要包含“确认范围、截止时间和交付标准/只承诺框架或基础版本/要求对方同步材料和补充节点”；risks 要包含“直接答应会变成你承担主要工作/范围不清/对方补充不及时”；reply 要像：可以，我可以先帮你把初稿框架搭一下。不过你先把具体要求、已有材料和截止时间发我，我这边先整理到一个基础版本。后面需要你及时补充细节，不然可能会影响最终进度。",
+    "输入：指定身份=上级；具体人物=林老师；回复形式=微信；消息=林老师：这个邀请函今天能不能先出一版？\n我：可以的，我现在整理信息。\n林老师：注意不要只是把信息平铺，语言要正式、连贯一点，最好像正式单位发出的邀请函。",
+    "输出风格参考：realIntent 要识别到“今天先完成邀请函初稿/不能只是信息罗列/需要正式连贯的单位公文式表达”；solutionOutline 要包含“整理邀请函基础信息/组织成连贯正式段落/今天内完成初稿并确认模板格式”；risks 要包含“关键信息缺失导致返工/平铺信息不符合正式文书要求/时间紧需先保证结构和语言规范”；reply 要像：好的林老师，我现在开始整理信息，今天内先完成邀请函初稿。语言上我会注意正式、连贯，尽量按照正式单位邀请函的表达来写。请问这边是否有固定模板或格式要求需要参考？；personProfileUpdate 要聚焦林老师：偏好正式、连贯、具有单位公文感的表达，不喜欢简单平铺信息；userProfileUpdate 必须为 null，因为用户本人只说了一句，不足以总结长期语言风格。",
+    "",
+    "必须只输出一个 JSON 对象，字段必须且只能为：realIntent, solutionOutline, risks, reply, personProfileUpdate, userProfileUpdate。",
     "",
     "字段规则：",
     "- realIntent：字符串数组，1~3 条。每条<=35字。写“对方真实想要的结果/态度/动作”。若不确定，用“可能/需要确认”。",
@@ -134,11 +148,20 @@ export function buildAnalyzePrompt({
     "- risks：字符串数组，0~5 条。至少覆盖 2 个维度：范围/时间/依赖/关系/承诺/验收口径/信息缺口。没明显风险可返回空数组。",
     "- reply：字符串或 null。只有当用户选择了微信或邮件时才生成；否则必须为 null。",
     "- personProfileUpdate：字符串或 null。只有当指定了 personName 时才生成；否则必须为 null。",
+    "- userProfileUpdate：字符串或 null。只有当【文字输入】中出现用户本人至少 2 句以上回复，且能稳定体现语气、常用表达或沟通偏好时，才允许生成；否则必须为 null。不要根据对方要求、身份指导或本次生成的 reply 反推出用户自己的语言风格。",
     "",
     "personProfileUpdate 写作要求（只有指定人物时）：",
     "- 用简短 Markdown（允许换行与小标题），输出“长期画像”，包含：语言风格/偏好、压力信号、边界/雷区、建议回复方式。",
     "- 不要记录隐私信息（手机号、地址、账号、金额等），不要记录一次性任务细节（例如某次具体文件名/金额/具体数据）。",
     "- 80~200 字左右，越精炼越好。",
+    "",
+    "userProfileUpdate 写作要求：",
+    "- 只有当【文字输入】中明确出现用户本人至少 2 句以上回复，且这些回复能稳定体现语气、常用表达或沟通偏好时，才允许输出。",
+    "- 用户本人回复通常以“我：”“我说：”“自己：”“用户：”等形式出现；如果只有一句短回复，例如“可以的，我现在整理信息”，必须返回 null。",
+    "- 不要根据对方要求、身份指导、人物画像或你本次生成的 reply 反推出用户自己的语言风格。",
+    "- 用简短 Markdown，记录用户本人长期回复偏好：语气、长度、常用表达、禁忌模板、面对不同身份时的偏好。",
+    "- 不要把对方风格写成用户风格；不要记录一次性任务内容或隐私信息。",
+    "- 50~160 字左右，若没有可靠新增偏好则返回 null。",
     "",
     `【文字输入】${message?.trim() ? message.trim() : "无"}`,
   ].join("\n");

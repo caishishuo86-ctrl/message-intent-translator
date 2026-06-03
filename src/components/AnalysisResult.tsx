@@ -45,6 +45,7 @@ export function AnalysisResult({ result }: Props) {
     `风险提示：${result.risks.join("；") || "暂无明显风险"}`,
     result.reply ? `回复：${result.reply}` : "",
     result.personProfileUpdate ? `人物画像更新：${result.personProfileUpdate}` : "",
+    result.userProfileUpdate ? `用户语言画像更新：${result.userProfileUpdate}` : "",
   ]
     .filter(Boolean)
     .join("\n");
@@ -85,6 +86,13 @@ export function AnalysisResult({ result }: Props) {
           <Section icon={<UserRound size={17} />} title="5. 人物画像更新">
             <p className="whitespace-pre-wrap rounded-md bg-zinc-50 p-4 text-sm leading-7 text-zinc-800">
               {result.personProfileUpdate}
+            </p>
+          </Section>
+        ) : null}
+        {result.userProfileUpdate ? (
+          <Section icon={<UserRound size={17} />} title="6. 用户语言画像更新">
+            <p className="whitespace-pre-wrap rounded-md bg-zinc-50 p-4 text-sm leading-7 text-zinc-800">
+              {result.userProfileUpdate}
             </p>
           </Section>
         ) : null}

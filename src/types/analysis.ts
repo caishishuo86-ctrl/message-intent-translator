@@ -12,4 +12,5 @@ export type AnalysisResult = {
   risks: string[];
   reply?: string | null;
   personProfileUpdate?: string | null;
+  userProfileUpdate?: string | null;
 };

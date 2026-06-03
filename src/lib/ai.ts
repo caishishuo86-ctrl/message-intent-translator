@@ -9,6 +9,7 @@ type AnalyzeInput = {
   outputFormat?: OutputFormat;
   personName?: string;
   personProfile?: string;
+  userProfile?: string;
 };
 
 function extractJson(text: string) {
@@ -47,6 +48,7 @@ function buildMessageContent(input: AnalyzeInput) {
     outputFormat: input.outputFormat,
     personName: input.personName,
     personProfile: input.personProfile,
+    userProfile: input.userProfile,
   });
 
   if (!input.imageDataUrl || process.env.AI_ENABLE_VISION !== "true") {
