@@ -43,7 +43,7 @@ export async function POST(request: Request) {
   const body = (await request.json()) as LarkMessageEvent;
   const message = body.event?.message;
   const senderOpenId = body.event?.sender?.sender_id?.open_id;
-  const advisorOpenId = process.env.LARK_PRIVATE_ADVISOR_USER_OPEN_ID ?? senderOpenId;
+  const advisorOpenId = senderOpenId ?? process.env.LARK_PRIVATE_ADVISOR_USER_OPEN_ID;
 
   if (!message || !isAllowedChat(message.chat_id)) {
     return NextResponse.json({ ok: true, ignored: true });
