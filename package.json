@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "lark:listen": "LARK_CLI_NO_PROXY=1 scripts/lark-advisor-listener.sh"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
