@@ -4,6 +4,7 @@ type LarkMessageEvent = {
   event?: {
     message?: {
       chat_id?: string;
+      chat_type?: string;
       content?: string;
     };
     sender?: {
@@ -39,11 +40,23 @@ function isAllowedChat(chatId?: string) {
   return Boolean(chatId && allowedChatIds.includes(chatId));
 }
 
+function isAdvisorMentioned(text: string) {
+  const keywords = process.env.LARK_ADVISOR_TRIGGER_KEYWORDS
+    ?.split(",")
+    .map((keyword) => keyword.trim())
+    .filter(Boolean);
+
+  if (!keywords?.length) return true;
+  return keywords.some((keyword) => text.includes(keyword) || text.includes(`@${keyword}`));
+}
+
 export async function POST(request: Request) {
   const body = (await request.json()) as LarkMessageEvent;
   const message = body.event?.message;
   const senderOpenId = body.event?.sender?.sender_id?.open_id;
-  const advisorOpenId = senderOpenId ?? process.env.LARK_PRIVATE_ADVISOR_USER_OPEN_ID;
+  const advisorOpenId = message?.chat_type === "group"
+    ? process.env.LARK_PRIVATE_ADVISOR_USER_OPEN_ID
+    : (senderOpenId ?? process.env.LARK_PRIVATE_ADVISOR_USER_OPEN_ID);
 
   if (!message || !isAllowedChat(message.chat_id)) {
     return NextResponse.json({ ok: true, ignored: true });
@@ -51,6 +64,10 @@ export async function POST(request: Request) {
 
   const text = parseTextContent(message.content);
   if (text.length < 2) {
+    return NextResponse.json({ ok: true, ignored: true });
+  }
+
+  if (message.chat_type === "group" && !isAdvisorMentioned(text)) {
     return NextResponse.json({ ok: true, ignored: true });
   }
 
