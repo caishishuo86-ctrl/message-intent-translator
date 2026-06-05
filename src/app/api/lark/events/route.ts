@@ -1,7 +1,4 @@
 import { NextResponse } from "next/server";
-import { formatPrivateAdvice, sendPrivateLarkMessage } from "@/lib/lark";
-import { extractPersonFromMessage } from "@/lib/personDetection";
-import { analyzeMessage } from "@/server/analyzeMessage";
 
 type LarkMessageEvent = {
   event?: {
@@ -73,6 +70,11 @@ export async function POST(request: Request) {
     throw new Error("LARK_PRIVATE_ADVISOR_USER_OPEN_ID is required when sender open_id is unavailable");
   }
 
+  const [{ analyzeMessage }, { formatPrivateAdvice, sendPrivateLarkMessage }, { extractPersonFromMessage }] = await Promise.all([
+    import("@/server/analyzeMessage"),
+    import("@/lib/lark"),
+    import("@/lib/personDetection"),
+  ]);
   const result = await analyzeMessage({
     message: text,
     identity: "同事",
